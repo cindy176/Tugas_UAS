@@ -6,20 +6,19 @@ require_once '../includes/db.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// ✅ Pastikan user sudah login
+
 if (!isset($_SESSION['user']) || !isset($_SESSION['user']['user_id'])) {
     header('Location: ../index.php');
     exit();
 }
 
-// ✅ Ambil kereta_id dari URL
+
 $kereta_id = isset($_GET['workshop_id']) ? intval($_GET['workshop_id']) : 0;
 if ($kereta_id <= 0) {
     header("Location: cari.php");
     exit;
 }
 
-// ✅ Ambil detail kereta berdasarkan kereta_id
 $queryKereta = "SELECT nama_kereta, address, image FROM kereta WHERE id = $kereta_id";
 $resultKereta = mysqli_query($conn, $queryKereta);
 $kereta = mysqli_fetch_assoc($resultKereta);
@@ -30,7 +29,6 @@ if (!$kereta) {
     exit;
 }
 
-// ✅ Ambil semua layanan yang tersedia di kereta ini
 $queryService = "SELECT service_id, service_name, price FROM services WHERE workshop_id = $kereta_id";
 $resultService = mysqli_query($conn, $queryService);
 $services = [];
@@ -40,7 +38,6 @@ if ($resultService && mysqli_num_rows($resultService) > 0) {
     }
 }
 
-// ✅ Jika form booking disubmit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $service_id     = intval($_POST['service_id']);
     $booking_date   = $_POST['booking_date'];
@@ -48,12 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $customer_name  = mysqli_real_escape_string($conn, $_POST['customer_name']);
     $customer_phone = mysqli_real_escape_string($conn, $_POST['customer_phone']);
 
-    // ✅ Ambil user_id dari session
-    if (isset($_SESSION['user']['user_id'])) {
+       if (isset($_SESSION['user']['user_id'])) {
         $user_id = $_SESSION['user']['user_id'];
     } else {
-        // Jika session hanya email → cari user_id dari tabel users
-        $email = mysqli_real_escape_string($conn, $_SESSION['user']);
+
+      $email = mysqli_real_escape_string($conn, $_SESSION['user']);
         $res = $conn->query("SELECT user_id FROM users WHERE email='$email' LIMIT 1");
         if ($res && $res->num_rows > 0) {
             $user_id = $res->fetch_assoc()['user_id'];
@@ -62,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ✅ Pastikan semua data booking lengkap sebelum insert
+    //  Pastikan semua data booking lengkap sebelum insert
     if ($kereta_id && $service_id && $booking_date && $booking_time) {
         // Hapus `booking_id` dari query INSERT karena itu auto_increment
          $stmt = $conn->prepare("
@@ -72,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("iiiss", $user_id, $kereta_id, $service_id, $booking_date, $booking_time);
         $stmt->execute();
 
-       // ✅ Setelah sukses booking → tampilkan alert dan redirect ke cari.php
+       // Setelah sukses booking → tampilkan alert dan redirect ke cari.php
         echo "<script>alert('Booking berhasil!'); window.location.href = 'cari.php';</script>";
         exit();
     } else {
